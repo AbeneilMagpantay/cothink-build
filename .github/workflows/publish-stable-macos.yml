@@ -32,7 +32,9 @@ jobs:
         include:
           - runner: macos-15-intel
             vscode_arch: x64
-          - runner: [self-hosted, macOS, ARM64]
+          # cothink v0.1 — same ARM64 swap as ci-build-macos.yml: GitHub-hosted macos-15
+          # (Apple Silicon hosted runner) instead of upstream's self-hosted Mac mini we don't have.
+          - runner: macos-15
             vscode_arch: arm64
 
     steps:

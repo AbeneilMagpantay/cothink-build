@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
-APP_NAME="${APP_NAME:-VSCodium}"
+# cothink rebrand: defaults flipped from VSCodium → cothink.
+# These flow through apply_patch() into every !!APP_NAME!! / !!BINARY_NAME!! /
+# !!ORG_NAME!! / !!ASSETS_REPOSITORY!! / !!GH_REPO_PATH!! / !!GLOBAL_DIRNAME!! /
+# !!TUNNEL_APP_NAME!! placeholder in the patches/ directory.
+APP_NAME="${APP_NAME:-cothink}"
 APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
-ASSETS_REPOSITORY="${ASSETS_REPOSITORY:-VSCodium/vscodium}"
-BINARY_NAME="${BINARY_NAME:-codium}"
-GH_REPO_PATH="${GH_REPO_PATH:-VSCodium/vscodium}"
-ORG_NAME="${ORG_NAME:-VSCodium}"
+ASSETS_REPOSITORY="${ASSETS_REPOSITORY:-AbeneilMagpantay/cothink-build}"
+BINARY_NAME="${BINARY_NAME:-cothink}"
+GH_REPO_PATH="${GH_REPO_PATH:-AbeneilMagpantay/cothink-build}"
+ORG_NAME="${ORG_NAME:-AbeneilMagpantay}"
 TUNNEL_APP_NAME="${TUNNEL_APP_NAME:-"${BINARY_NAME}-tunnel"}"
 
 if [[ "${VSCODE_QUALITY}" == "insider" ]]; then

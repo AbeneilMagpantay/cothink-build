@@ -7,14 +7,15 @@ on:
       - publish-stable
 
 env:
-  APP_NAME: VSCodium
+  APP_NAME: cothink
   ASSETS_REPOSITORY: ${{ github.repository }}
-  BINARY_NAME: codium
+  BINARY_NAME: cothink
   GH_REPO_PATH: ${{ github.repository }}
   GITHUB_BRANCH: master
   ORG_NAME: ${{ github.repository_owner }}
   OS_NAME: windows
-  VERSIONS_REPOSITORY: ${{ github.repository_owner }}/versions
+  # cothink-versions repo not provisioned yet; update_version.sh step is disabled below.
+  VERSIONS_REPOSITORY: ${{ github.repository_owner }}/cothink-versions
   VSCODE_QUALITY: stable
 
 jobs:
@@ -187,20 +188,28 @@ jobs:
           retention-days: 1
         if: env.SHOULD_BUILD == 'yes'
 
-      - name: Signing
-        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
-          signing-policy-slug: ${{ secrets.SIGNPATH_POLICY_SLUG }}
-          github-artifact-id: ${{ steps.upload-unsigned-artifacts.outputs.artifact-id }}
-          artifact-configuration-slug: ${{ matrix.vscode_arch }}
-          wait-for-completion: true
-          # 8h to manually approve the request
-          wait-for-completion-timeout-in-seconds: 28800
-          output-artifact-directory: assets/
-        if: env.SHOULD_BUILD == 'yes'
+      # cothink v0.1 — Windows code-signing disabled. SignPath needs a registered project under our
+      # org; the path forward is a Sectigo OV cert ($89/yr) submitted through SignPath OSS or
+      # eSigner cloud HSM. Until that's set up, ship UNSIGNED .exe artifacts (users get SmartScreen
+      # warnings on first run; acceptable for v0.1 since the audience is the dev + early testers).
+      # Re-enable this step at v0.5+ once SIGNPATH_API_TOKEN + co. secrets exist on the fork.
+      # - name: Signing
+      #   uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd # v2
+      #   with:
+      #     api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+      #     organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+      #     project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+      #     signing-policy-slug: ${{ secrets.SIGNPATH_POLICY_SLUG }}
+      #     github-artifact-id: ${{ steps.upload-unsigned-artifacts.outputs.artifact-id }}
+      #     artifact-configuration-slug: ${{ matrix.vscode_arch }}
+      #     wait-for-completion: true
+      #     # 8h to manually approve the request
+      #     wait-for-completion-timeout-in-seconds: 28800
+      #     output-artifact-directory: assets/
+      #   if: env.SHOULD_BUILD == 'yes'
+
+      # Unsigned .exe/.msi already in assets/ from prepare_assets.sh — checksum + release steps
+      # below pick them up directly. No extra staging needed for the v0.1 (unsigned) path.
 
       - name: Prepare checksums
         run: ./prepare_checksums.sh
@@ -212,42 +221,47 @@ jobs:
         run: ./release.sh
         if: env.SHOULD_BUILD == 'yes'
 
-      - name: Update versions repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
-          GITHUB_USERNAME: ${{ github.repository_owner }}
-        run: ./update_version.sh
-        if: env.SHOULD_BUILD == 'yes'
+      # cothink v0.1 — VERSIONS_REPOSITORY not provisioned yet; auto-update wiring is a v0.2+ task.
+      # - name: Update versions repo
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+      #     GITHUB_USERNAME: ${{ github.repository_owner }}
+      #   run: ./update_version.sh
+      #   if: env.SHOULD_BUILD == 'yes'
 
-  winget:
-    needs: build
-    runs-on: windows-2022
-    environment: publish
-    permissions:
-      contents: write
-    defaults:
-      run:
-        shell: bash
-    env:
-      APP_IDENTIFIER: VSCodium.VSCodium
-
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ env.GITHUB_BRANCH }}
-          persist-credentials: false
-
-      - name: Check version
-        run: ./stores/winget/check_version.sh
-        env:
-          RELEASE_VERSION: ${{ needs.build.outputs.RELEASE_VERSION }}
-
-      - name: Release to WinGet
-        uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
-        with:
-          identifier: ${{ env.APP_IDENTIFIER }}
-          version: ${{ env.RELEASE_VERSION }}
-          release-tag: ${{ env.RELEASE_VERSION }}
-          installers-regex: '\.exe$' # only .exe files
-          token: ${{ secrets.STRONGER_GITHUB_TOKEN }}
-        if: env.SHOULD_DEPLOY == 'yes'
+  # cothink v0.1 — winget submission deferred. winget-pkgs requires a stable installer URL +
+  # a reviewer-managed PR process. Re-enable at v0.5+ once we have signed Windows binaries (winget
+  # reviewers reject unsigned installers by default). Use cothink.cothink as the APP_IDENTIFIER
+  # to match win32AppUserModelId set in prepare_vscode.sh.
+  # winget:
+  #   needs: build
+  #   runs-on: windows-2022
+  #   environment: publish
+  #   permissions:
+  #     contents: write
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   env:
+  #     APP_IDENTIFIER: cothink.cothink
+  #
+  #   steps:
+  #     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+  #       with:
+  #         ref: ${{ env.GITHUB_BRANCH }}
+  #         persist-credentials: false
+  #
+  #     - name: Check version
+  #       run: ./stores/winget/check_version.sh
+  #       env:
+  #         RELEASE_VERSION: ${{ needs.build.outputs.RELEASE_VERSION }}
+  #
+  #     - name: Release to WinGet
+  #       uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
+  #       with:
+  #         identifier: ${{ env.APP_IDENTIFIER }}
+  #         version: ${{ env.RELEASE_VERSION }}
+  #         release-tag: ${{ env.RELEASE_VERSION }}
+  #         installers-regex: '\.exe$' # only .exe files
+  #         token: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+  #       if: env.SHOULD_DEPLOY == 'yes'

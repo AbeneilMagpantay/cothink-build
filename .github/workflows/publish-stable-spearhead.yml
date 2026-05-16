@@ -14,14 +14,18 @@ on:
         description: Disable dispatch
 
 env:
-  APP_NAME: VSCodium
+  APP_NAME: cothink
   ASSETS_REPOSITORY: ${{ github.repository }}
-  BINARY_NAME: codium
+  BINARY_NAME: cothink
   GH_REPO_PATH: ${{ github.repository }}
   ORG_NAME: ${{ github.repository_owner }}
   OS_NAME: osx
-  SOURCEMAPS_REPOSITORY: ${{ github.repository_owner }}/sourcemaps
-  VERSIONS_REPOSITORY: ${{ github.repository_owner }}/versions
+  # cothink v0.1 — the sourcemaps + versions repos don't exist yet. Spearhead will need them
+  # provisioned (or its upload_sourcemaps + dispatch steps disabled) before its first run.
+  # For v0.1, we don't run the spearhead — we trigger publish-stable-{linux,macos,windows}.yml
+  # manually via workflow_dispatch instead.
+  SOURCEMAPS_REPOSITORY: ${{ github.repository_owner }}/cothink-sourcemaps
+  VERSIONS_REPOSITORY: ${{ github.repository_owner }}/cothink-versions
   VSCODE_ARCH: arm64
   VSCODE_LATEST: ${{ github.event.inputs.dont_update == 'true' && 'no' || 'yes' }}
   VSCODE_QUALITY: stable

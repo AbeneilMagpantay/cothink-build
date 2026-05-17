@@ -7,6 +7,17 @@ APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
 
 mkdir -p assets
 
+# cothink v0.1 — fetch the PyInstaller-built cothink-serve sidecar from the
+# matching GitHub Release on AbeneilMagpantay/cothink and drop it into the
+# VSCode build output's resources/ directory.  When Inno Setup (Windows) /
+# create-dmg (macOS) / tar+AppImage (Linux) packs the installer, the binary
+# rides along.  At runtime the built-in extension's resolveSidecarBinary()
+# finds it at process.resourcesPath and spawns it without needing Python.
+if [[ -x "./sidecar/fetch_sidecar.sh" || -f "./sidecar/fetch_sidecar.sh" ]]; then
+  echo "fetching cothink-serve sidecar..."
+  bash ./sidecar/fetch_sidecar.sh
+fi
+
 if [[ "${OS_NAME}" == "osx" ]]; then
   . ./build/osx/prepare_assets.sh
 

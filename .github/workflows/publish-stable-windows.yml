@@ -129,6 +129,12 @@ jobs:
       MS_TAG: ${{ needs.check.outputs.MS_TAG }}
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
       SHOULD_BUILD: ${{ needs.check.outputs.SHOULD_BUILD }}
+      # cothink v0.1 — skip MSI generation.  build/windows/msi/build.sh still hardcodes
+      # PRODUCT_NAME=VSCodium / PRODUCT_CODE=VSCodium / OUTPUT_BASE_FILENAME=VSCodium-x64- and
+      # bypasses prepare_vscode.sh's substitution chain.  Rebranding the MSI builder is a
+      # separate v0.5+ task.  The .exe (Inno Setup) installer is the primary v0.1 artifact.
+      SHOULD_BUILD_MSI: no
+      SHOULD_BUILD_MSI_NOUP: no
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
     outputs:
       RELEASE_VERSION: ${{ env.RELEASE_VERSION }}

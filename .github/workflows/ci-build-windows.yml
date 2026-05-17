@@ -111,6 +111,17 @@ jobs:
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
       SHOULD_BUILD_REH: no
       SHOULD_BUILD_REH_WEB: no
+      # cothink v0.1 — skip MSI generation.  Two reasons:
+      #  1. ci-build-windows.yml's build job references needs.check.outputs.RELEASE_VERSION but
+      #     this workflow has no `check:` job, so RELEASE_VERSION is empty and WiX candle.exe
+      #     rejects empty Product/@Version (CNDL0006).  Upstream VSCodium bug; we hit it because
+      #     we trigger ci-build via workflow_dispatch.
+      #  2. build/windows/msi/build.sh still hardcodes PRODUCT_NAME=VSCodium / PRODUCT_CODE=
+      #     VSCodium / OUTPUT_BASE_FILENAME=VSCodium-x64- and bypasses prepare_vscode.sh's
+      #     substitution chain.  Rebranding the MSI builder is a separate v0.5+ task.
+      # The .exe (Inno Setup) installer covers the same audience for v0.1.
+      SHOULD_BUILD_MSI: no
+      SHOULD_BUILD_MSI_NOUP: no
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
     outputs:
       RELEASE_VERSION: ${{ env.RELEASE_VERSION }}

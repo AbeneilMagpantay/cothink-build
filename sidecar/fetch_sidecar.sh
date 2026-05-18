@@ -18,7 +18,7 @@
 
 set -euo pipefail
 
-COTHINK_SIDECAR_VERSION="${COTHINK_SIDECAR_VERSION:-v0.1.0}"
+COTHINK_SIDECAR_VERSION="${COTHINK_SIDECAR_VERSION:-v0.2.0}"
 COTHINK_REPO="${COTHINK_REPO:-AbeneilMagpantay/cothink}"
 
 # Map OS_NAME + VSCODE_ARCH to the release asset name + the target path.

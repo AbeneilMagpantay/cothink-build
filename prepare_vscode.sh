@@ -40,11 +40,13 @@ setpath "product" "checksumFailMoreInfoUrl" "https://github.com/AbeneilMagpantay
 setpath "product" "documentationUrl" "https://github.com/AbeneilMagpantay/cothink-build#readme"
 setpath_json "product" "extensionsGallery" '{"serviceUrl": "https://open-vsx.org/vscode/gallery", "itemUrl": "https://open-vsx.org/vscode/item", "latestUrlTemplate": "https://open-vsx.org/vscode/gallery/{publisher}/{name}/latest", "controlUrl": "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/refs/heads/master/extension-control/extensions.json"}'
 
-# cothink v0.7 — Cursor-shape default layout, baked into product.json so
-# VSCode reads these defaults at startup BEFORE rendering anything.  This
-# is the only place that wins the race against the welcome page (extension
-# config.update calls fire too late — onStartupFinished runs AFTER welcome
-# is already on screen).  Users can override any of these in Settings.
+# cothink v0.8 — kill literally every VSCode-chrome surface so the first
+# launch looks like Cursor/Codex: one composer, full window, no menu bar,
+# no tab strip, no explorer, no top search box, no breadcrumbs, no
+# outline.  VSCode reads product.json's configurationDefaults during the
+# configuration service bootstrap — applied BEFORE any UI renders, so we
+# win the race against welcome/sidebar/menubar.  Users can override any
+# of these in Settings (Ctrl+,) or via the View menu (Alt+ to reveal).
 setpath_json "product" "configurationDefaults" '{
   "workbench.startupEditor": "none",
   "workbench.activityBar.location": "hidden",
@@ -52,12 +54,43 @@ setpath_json "product" "configurationDefaults" '{
   "workbench.colorTheme": "cothink Dark",
   "workbench.editor.empty.hint": "hidden",
   "workbench.editor.enablePreview": false,
+  "workbench.editor.showTabs": "none",
+  "workbench.editor.tabActionLocation": "right",
+  "workbench.editor.tabCloseButton": "off",
+  "workbench.editor.titleScrollbarSizing": "default",
+  "workbench.layoutControl.enabled": false,
   "workbench.tips.enabled": false,
+  "workbench.tree.indent": 12,
   "workbench.welcomePage.walkthroughs.openOnInstall": false,
+  "window.menuBarVisibility": "compact",
+  "window.commandCenter": false,
+  "window.customTitleBarVisibility": "auto",
+  "breadcrumbs.enabled": false,
+  "outline.collapseItems": "alwaysCollapse",
+  "timeline.excludeSources": ["git-history", "extension-timeline.source"],
+  "explorer.openEditors.visible": 0,
+  "scm.alwaysShowProviders": false,
   "telemetry.telemetryLevel": "off",
   "update.showReleaseNotes": false,
+  "update.mode": "manual",
   "extensions.ignoreRecommendations": true,
-  "git.openRepositoryInParentFolders": "never"
+  "extensions.autoUpdate": false,
+  "git.openRepositoryInParentFolders": "never",
+  "editor.minimap.enabled": false,
+  "editor.glyphMargin": false,
+  "editor.folding": true,
+  "editor.lineNumbers": "on",
+  "editor.renderLineHighlight": "none",
+  "editor.overviewRulerBorder": false,
+  "editor.hideCursorInOverviewRuler": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true
+  }
 }'
 
 setpath "product" "introductoryVideosUrl" "https://github.com/AbeneilMagpantay/cothink-build#readme"
@@ -312,6 +345,65 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
   sed -i 's|https://code.visualstudio.com|https://github.com/AbeneilMagpantay/cothink-build|' build/win32/code.iss
   sed -i 's|Microsoft Corporation|cothink|' build/win32/code.iss
 fi
+
+
+# cothink v0.8 — inject Cursor-shape chrome-hiding CSS into VSCode's workbench
+# styles BEFORE the build packages them.  Same pattern as 00-ui-custom-font
+# but applied via append rather than .patch (we don't need to hit specific
+# line numbers).  Result: tab strip, menubar, sidebar, panel, breadcrumbs,
+# command center, etc. are display:none from the very first frame — no
+# flicker, no race conditions, no need for an extension retry loop.
+#
+# Users who want to re-enable any of these can do so via Settings (Ctrl+,)
+# overriding the configurationDefaults set above; but more practically, the
+# CSS classes can be re-enabled by editing the cothink-installed CSS file
+# manually if a power user really wants to.
+cat >> src/vs/workbench/browser/style.css <<'COTHINK_HIDE_CHROME_EOF'
+
+/* === cothink v0.8 — hide VSCode chrome to make the IDE look like Cursor/Codex === */
+
+/* Title bar: kill the menu (File Edit Selection...), command center search,
+   and the right-side toolbar (CHAT button, layout split icons, etc.). The
+   draggable area + window controls stay so the window remains movable +
+   closable. */
+.monaco-workbench .part.titlebar .menubar { display: none !important; }
+.monaco-workbench .part.titlebar .command-center-center { display: none !important; }
+.monaco-workbench .part.titlebar .menubar-main { display: none !important; }
+.monaco-workbench .part.titlebar .titlebar-right .action-toolbar-container > .actions-container > .action-item:not(.window-controls-container .action-item) { display: none !important; }
+
+/* Editor area: kill the tab strip + tab actions. The composer is the only
+   thing that should appear in the editor area. */
+.monaco-workbench .part.editor .tabs-and-actions-container { display: none !important; }
+.monaco-workbench .part.editor .title.tabs { display: none !important; }
+.monaco-workbench .part.editor .title-actions { display: none !important; }
+
+/* Sidebar (primary): hide entirely. Explorer + OUTLINE + TIMELINE all gone. */
+.monaco-workbench .part.sidebar { display: none !important; }
+
+/* Auxiliary bar (right): hide entirely. */
+.monaco-workbench .part.auxiliarybar { display: none !important; }
+
+/* Bottom panel: hide entirely (terminal/output/problems). User can re-show
+   via Ctrl+J if they need it. */
+.monaco-workbench .part.panel { display: none !important; }
+
+/* Breadcrumbs above the editor: kill. */
+.monaco-breadcrumbs { display: none !important; }
+.monaco-workbench .part.editor .breadcrumbs-control { display: none !important; }
+
+/* Activity bar (left icon strip): belt-and-suspenders alongside the
+   workbench.activityBar.location=hidden setting. */
+.monaco-workbench .part.activitybar { display: none !important; }
+
+/* Status bar: keep visible — our cothink reachability indicator lives there.
+   (configurationDefaults already has workbench.statusBar.visible=true.) */
+
+/* Make the editor area fill the full window since side + bottom panels are gone. */
+.monaco-workbench .part.editor { left: 0 !important; }
+
+COTHINK_HIDE_CHROME_EOF
+
+echo "cothink: injected chrome-hide CSS into vscode/src/vs/workbench/browser/style.css"
 
 cd ..
 

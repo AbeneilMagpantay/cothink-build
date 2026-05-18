@@ -18,7 +18,7 @@
 
 set -euo pipefail
 
-COTHINK_EXTENSION_VERSION="${COTHINK_EXTENSION_VERSION:-v0.3.0}"
+COTHINK_EXTENSION_VERSION="${COTHINK_EXTENSION_VERSION:-v0.5.0}"
 COTHINK_REPO="${COTHINK_REPO:-AbeneilMagpantay/cothink}"
 ASSET="cothink-extension.tar.gz"
 

@@ -40,6 +40,26 @@ setpath "product" "checksumFailMoreInfoUrl" "https://github.com/AbeneilMagpantay
 setpath "product" "documentationUrl" "https://github.com/AbeneilMagpantay/cothink-build#readme"
 setpath_json "product" "extensionsGallery" '{"serviceUrl": "https://open-vsx.org/vscode/gallery", "itemUrl": "https://open-vsx.org/vscode/item", "latestUrlTemplate": "https://open-vsx.org/vscode/gallery/{publisher}/{name}/latest", "controlUrl": "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/refs/heads/master/extension-control/extensions.json"}'
 
+# cothink v0.7 — Cursor-shape default layout, baked into product.json so
+# VSCode reads these defaults at startup BEFORE rendering anything.  This
+# is the only place that wins the race against the welcome page (extension
+# config.update calls fire too late — onStartupFinished runs AFTER welcome
+# is already on screen).  Users can override any of these in Settings.
+setpath_json "product" "configurationDefaults" '{
+  "workbench.startupEditor": "none",
+  "workbench.activityBar.location": "hidden",
+  "workbench.statusBar.visible": true,
+  "workbench.colorTheme": "cothink Dark",
+  "workbench.editor.empty.hint": "hidden",
+  "workbench.editor.enablePreview": false,
+  "workbench.tips.enabled": false,
+  "workbench.welcomePage.walkthroughs.openOnInstall": false,
+  "telemetry.telemetryLevel": "off",
+  "update.showReleaseNotes": false,
+  "extensions.ignoreRecommendations": true,
+  "git.openRepositoryInParentFolders": "never"
+}'
+
 setpath "product" "introductoryVideosUrl" "https://github.com/AbeneilMagpantay/cothink-build#readme"
 setpath "product" "keyboardShortcutsUrlLinux" "https://github.com/AbeneilMagpantay/cothink-build/blob/main/docs/keybindings-linux.md"
 setpath "product" "keyboardShortcutsUrlMac" "https://github.com/AbeneilMagpantay/cothink-build/blob/main/docs/keybindings-macos.md"

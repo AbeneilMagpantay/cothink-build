@@ -22,26 +22,38 @@ COTHINK_SIDECAR_VERSION="${COTHINK_SIDECAR_VERSION:-v0.1.0}"
 COTHINK_REPO="${COTHINK_REPO:-AbeneilMagpantay/cothink}"
 
 # Map OS_NAME + VSCODE_ARCH to the release asset name + the target path.
-case "${OS_NAME}" in
-  windows)
+# Unsupported arches (e.g. Linux LOONG64, RISCV64, PPC64, S390X) get a
+# skip-with-notice rather than a hard fail — the fork build for those arches
+# still produces a usable IDE, just without the bundled AI sidecar.  Users on
+# those arches would need to install Python + cothink themselves to use the
+# extension's dev-mode fallback.
+case "${OS_NAME}:${VSCODE_ARCH}" in
+  windows:x64)
     ASSET="cothink-serve-windows-x64.exe"
     : "${VSCODE_OUTPUT_DIR:=./VSCode-win32-${VSCODE_ARCH}}"
     TARGET="${VSCODE_OUTPUT_DIR}/resources/cothink-serve.exe"
     ;;
-  linux)
+  linux:x64)
     ASSET="cothink-serve-linux-x64"
     : "${VSCODE_OUTPUT_DIR:=./VSCode-linux-${VSCODE_ARCH}}"
     TARGET="${VSCODE_OUTPUT_DIR}/resources/cothink-serve"
     ;;
-  osx)
-    # macOS bundles use Contents/Resources/ inside the .app
+  osx:arm64|osx:x64)
+    # cothink only publishes a macOS arm64 binary in v0.1.0; we use it for
+    # both Apple Silicon and Intel until we add a separate macos-x64 build.
+    # On Intel Macs the arm64 binary runs under Rosetta 2 (slow but works).
     ASSET="cothink-serve-macos-arm64"
     : "${VSCODE_OUTPUT_DIR:=./VSCode-darwin-${VSCODE_ARCH}}"
     TARGET="${VSCODE_OUTPUT_DIR}/cothink.app/Contents/Resources/cothink-serve"
     ;;
+  windows:arm64|linux:arm64|linux:armhf|linux:ppc64le|linux:loong64|linux:riscv64|linux:s390x)
+    echo "fetch_sidecar.sh: NOTICE no sidecar binary published for ${OS_NAME}:${VSCODE_ARCH}, skipping."
+    echo "fetch_sidecar.sh: NOTICE the fork build will succeed without the bundled sidecar; users will need dev-mode Python."
+    exit 0
+    ;;
   *)
-    echo "fetch_sidecar.sh: unrecognized OS_NAME='${OS_NAME}'" >&2
-    exit 1
+    echo "fetch_sidecar.sh: WARN unrecognized OS_NAME:VSCODE_ARCH='${OS_NAME}:${VSCODE_ARCH}', skipping fetch." >&2
+    exit 0
     ;;
 esac
 

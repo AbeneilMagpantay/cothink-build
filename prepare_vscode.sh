@@ -294,3 +294,14 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
 fi
 
 cd ..
+
+# cothink v0.5 — fetch the built-in extension tarball from the cothink GitHub
+# Release and extract it into vscode/extensions/cothink/ so the gulp build
+# packages it as a bundled extension.  Pinned to COTHINK_EXTENSION_VERSION
+# (default v0.1.0) so the fork's build is reproducible against a known
+# extension version — bump that env var (or the script default) when we ship
+# a new extension release.
+if [[ -f "./sidecar/fetch_extension.sh" ]]; then
+  echo "fetching cothink built-in extension..."
+  bash ./sidecar/fetch_extension.sh
+fi

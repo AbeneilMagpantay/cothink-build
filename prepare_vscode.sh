@@ -358,6 +358,56 @@ fi
 # overriding the configurationDefaults set above; but more practically, the
 # CSS classes can be re-enabled by editing the cothink-installed CSS file
 # manually if a power user really wants to.
+# v0.8 first attempt appended to src/vs/workbench/browser/style.css.  Build
+# logs confirmed the append ran, but the rules never made it into runtime
+# workbench.desktop.main.css — that file isn't in VSCode's bundled CSS
+# module graph.  v0.9: append the same rules to actionbar.css (proven-
+# bundled by the existing 00-ui-custom-font.patch which lands its rules at
+# runtime via that same file) PLUS each workbench-part CSS file directly.
+# At least one of these files reliably ships in workbench.desktop.main.css.
+COTHINK_HIDE_CSS=$(cat <<'COTHINK_HIDE_INNER'
+
+/* === cothink v0.8/v0.9 — hide ALL VSCode chrome (Cursor-shape) === */
+.monaco-workbench .part.titlebar .menubar { display: none !important; }
+.monaco-workbench .part.titlebar .menubar-main { display: none !important; }
+.monaco-workbench .part.titlebar .command-center-center { display: none !important; }
+.monaco-workbench .part.titlebar .command-center { display: none !important; }
+.monaco-workbench .part.titlebar .action-toolbar-container { display: none !important; }
+.monaco-workbench .part.titlebar .layout-controls-container { display: none !important; }
+.monaco-workbench .part.editor .tabs-and-actions-container { display: none !important; }
+.monaco-workbench .part.editor .title.tabs { display: none !important; }
+.monaco-workbench .part.editor .title-actions { display: none !important; }
+.monaco-workbench .part.editor > .content > .editor-group-container > .title { display: none !important; }
+.monaco-workbench .part.sidebar { display: none !important; }
+.monaco-workbench .part.auxiliarybar { display: none !important; }
+.monaco-workbench .part.panel { display: none !important; }
+.monaco-workbench .part.activitybar { display: none !important; }
+.monaco-breadcrumbs { display: none !important; }
+.monaco-workbench .part.editor .breadcrumbs-control { display: none !important; }
+.monaco-workbench .part.editor { left: 0 !important; }
+COTHINK_HIDE_INNER
+)
+
+# Try every plausible target — at least one is in the bundled CSS graph.
+for css_target in \
+  "src/vs/base/browser/ui/actionbar/actionbar.css" \
+  "src/vs/workbench/browser/style.css" \
+  "src/vs/workbench/browser/parts/titlebar/media/titlebarpart.css" \
+  "src/vs/workbench/browser/parts/sidebar/media/sidebarpart.css" \
+  "src/vs/workbench/browser/parts/auxiliarybar/media/auxiliarybarpart.css" \
+  "src/vs/workbench/browser/parts/panel/media/panelpart.css" \
+  "src/vs/workbench/browser/parts/activitybar/media/activitybar.css" \
+  "src/vs/workbench/browser/parts/editor/media/editorpart.css" \
+  "src/vs/workbench/browser/parts/editor/media/editor.css" ; do
+  if [[ -f "${css_target}" ]]; then
+    echo "${COTHINK_HIDE_CSS}" >> "${css_target}"
+    echo "cothink: appended chrome-hide rules to ${css_target}"
+  else
+    echo "cothink: skipped (not found): ${css_target}"
+  fi
+done
+
+# Keep the legacy block too so existing readers find the v0.8 marker.
 cat >> src/vs/workbench/browser/style.css <<'COTHINK_HIDE_CHROME_EOF'
 
 /* === cothink v0.8 — hide VSCode chrome to make the IDE look like Cursor/Codex === */
